@@ -58,6 +58,10 @@ export const machinesAPI = {
         api.post(`/machines/${machineId}/submit-flag/`, { flag, flag_type: flagType }),
     submitTask: (machineId: string, taskIndex: number, answer: string) =>
         api.post(`/machines/${machineId}/submit-task/`, { task_index: taskIndex, answer }),
+    submitRating: (machineId: string, rating: number) =>
+        api.post(`/machines/${machineId}/rate/`, { rating }),
+    completeMachine: (machineId: string) =>
+        api.post(`/machines/${machineId}/complete/`),
 }
 
 // Leaderboard

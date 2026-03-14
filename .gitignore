@@ -1,0 +1,24 @@
+  
+# dependencies
+/node_modules
+.pnp
+
+# next.js
+/.next/
+
+# local env files
+.env*.local
+.env
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+ 
+# asset
+asset/
+
+# package lock
+package-lock.json
+
+# cyber-frontend
+cyber-frontend/

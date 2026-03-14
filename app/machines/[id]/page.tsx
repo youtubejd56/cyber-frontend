@@ -497,6 +497,33 @@ export default function MachineDetailPage() {
                                 </div>
                             </div>
 
+                            {/* Mark as Completed Button */}
+                            <div className="bg-[#1f2937] rounded-xl border border-gray-800 p-4">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-white text-sm font-medium">Done with this machine?</span>
+                                    </div>
+                                    <button
+                                        onClick={async () => {
+                                            if (!Cookies.get('token')) { router.push('/login'); return }
+                                            try {
+                                                const res = await machinesAPI.completeMachine(id as string)
+                                                setMachine((prev: any) => ({ ...prev, user_completed: res.data.completed }))
+                                                toast.success(res.data.message)
+                                            } catch (err: any) {
+                                                toast.error('Failed to update completion status')
+                                            }
+                                        }}
+                                        className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${machine.user_completed
+                                                ? 'bg-green-500 text-white'
+                                                : 'bg-gray-700 hover:bg-gray-600 text-white'
+                                            }`}
+                                    >
+                                        {machine.user_completed ? '✓ Completed' : 'Mark as Completed'}
+                                    </button>
+                                </div>
+                            </div>
+
                             {/* Difficulty Rating */}
                             <div className="bg-[#1f2937] rounded-xl border border-gray-800 p-4">
                                 <div className="flex items-center justify-between">
@@ -576,6 +603,46 @@ export default function MachineDetailPage() {
                                     <div className="text-white font-mono text-sm">{v}</div>
                                 </div>
                             ))}
+                        </div>
+
+                        {/* Submit Rating - HackTheBox Style */}
+                        <div className="mt-6 pt-6 border-t border-gray-700">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <label className="text-white font-medium text-sm block mb-2">Rate this machine</label>
+                                    <div className="flex items-center gap-1">
+                                        {[1, 2, 3, 4, 5].map((star) => (
+                                            <button
+                                                key={star}
+                                                onClick={async () => {
+                                                    if (!Cookies.get('token')) { router.push('/login'); return }
+                                                    try {
+                                                        const res = await machinesAPI.submitRating(id as string, star)
+                                                        setMachine((prev: any) => ({ ...prev, rating: res.data.machine_rating, user_rating: star, rating_count: res.data.rating_count }))
+                                                        toast.success(star === (machine.user_rating || 0) ? 'Rating updated!' : 'Rating submitted!')
+                                                    } catch (err: any) {
+                                                        toast.error('Failed to submit rating')
+                                                    }
+                                                }}
+                                                className={`text-2xl transition-colors ${(ratingValue > 0 ? star <= ratingValue : (machine.user_rating && star <= machine.user_rating))
+                                                    ? 'text-yellow-400'
+                                                    : 'text-gray-600 hover:text-yellow-400/60'
+                                                    }`}
+                                            >
+                                                ★
+                                            </button>
+                                        ))}
+                                        <span className="ml-2 text-gray-400 text-sm">
+                                            ({machine.rating_count || 0} votes)
+                                        </span>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-yellow-400 text-sm font-medium">
+                                        {machine.user_rating ? `Your rating: ${machine.user_rating}★` : 'Not rated'}
+                                    </span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 )}
