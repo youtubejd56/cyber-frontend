@@ -239,7 +239,7 @@ export default function ProfilePage() {
                                 <Download className="w-4 h-4" />
                                 Download Certificate
                             </a>
-                        ) : certEligibility?.eligible ? (
+                        ) : (
                             <button
                                 onClick={handleGenerateCertificate}
                                 className="px-4 py-2 bg-gradient-to-r from-yellow-500 to-orange-500 border-0 rounded text-sm text-black font-bold hover:from-yellow-400 hover:to-orange-400 transition-all flex items-center gap-2"
@@ -247,7 +247,7 @@ export default function ProfilePage() {
                                 <Award className="w-4 h-4" />
                                 Get Certificate
                             </button>
-                        ) : null}
+                        )}
                         <button
                             onClick={() => setShowFrameModal(true)}
                             className="px-4 py-2 bg-gradient-to-r from-[#9fef00] to-[#7acc00] border-0 rounded text-sm text-black font-bold hover:from-[#afff00] hover:to-[#9fef00] transition-all"
