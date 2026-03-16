@@ -3,9 +3,9 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Cookies from 'js-cookie'
-import { Trophy, Flag, Target, Star, ChevronRight, Clock, Lock, Crown, Gem, Award, Shield, Zap, Camera } from 'lucide-react'
+import { Trophy, Flag, Target, Star, ChevronRight, Clock, Lock, Crown, Gem, Award, Shield, Zap, Camera, Download } from 'lucide-react'
 import Navbar from '../../components/Navbar'
-import { authAPI, roomsAPI, machinesAPI, framesAPI } from '../../lib/api'
+import { authAPI, roomsAPI, machinesAPI, framesAPI, certificateAPI } from '../../lib/api'
 
 // Hexagon SVG clip
 const HEX_CLIP = `polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%)`
@@ -119,6 +119,8 @@ export default function ProfilePage() {
     const [showAvatarModal, setShowAvatarModal] = useState(false)
     const [myFrames, setMyFrames] = useState<any>(null)
     const [currentFrame, setCurrentFrame] = useState('default')
+    const [certificate, setCertificate] = useState<any>(null)
+    const [certEligibility, setCertEligibility] = useState<any>(null)
 
     useEffect(() => {
         const token = Cookies.get('token')
@@ -133,6 +135,10 @@ export default function ProfilePage() {
             })
             .catch(() => router.push('/login'))
             .finally(() => setLoading(false))
+
+        // Check certificate eligibility
+        certificateAPI.getEligibility().then(res => setCertEligibility(res.data)).catch(() => { })
+        certificateAPI.getMyCertificate().then(res => setCertificate(res.data)).catch(() => { })
     }, [])
 
     const handleSelectFrame = async (frameId: string) => {
@@ -156,6 +162,15 @@ export default function ProfilePage() {
             setShowAvatarModal(false)
         } catch (error) {
             console.error('Failed to update avatar:', error)
+        }
+    }
+
+    const handleGenerateCertificate = async () => {
+        try {
+            const res = await certificateAPI.generate()
+            setCertificate(res.data)
+        } catch (error) {
+            console.error('Failed to generate certificate:', error)
         }
     }
 
@@ -307,6 +322,57 @@ export default function ProfilePage() {
                                 <span className="text-white font-mono">{user.date_joined ? new Date(user.date_joined).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : '—'}</span>
                             </div>
                         </div>
+
+                        {/* Certificate Card */}
+                        {certEligibility && (
+                            <div className="bg-[#1f2937] rounded-xl border border-gray-800 p-4">
+                                <div className="flex items-center gap-2 mb-3">
+                                    <Award className="w-5 h-5 text-yellow-500" />
+                                    <h3 className="text-white font-bold">Certificate</h3>
+                                </div>
+
+                                {certificate?.has_certificate ? (
+                                    <div className="space-y-3">
+                                        <p className="text-green-400 text-sm">✓ You have earned your certificate!</p>
+                                        <div className="bg-[#111827] rounded-lg p-3 space-y-1">
+                                            <p className="text-xs text-gray-400">Certificate ID</p>
+                                            <p className="text-white font-mono text-sm">{certificate.certificate_id}</p>
+                                        </div>
+                                        <a
+                                            href={certificate.download_url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 rounded-lg text-black font-bold text-sm transition-all"
+                                        >
+                                            <Download className="w-4 h-4" />
+                                            Download Certificate
+                                        </a>
+                                    </div>
+                                ) : certEligibility?.eligible ? (
+                                    <div className="space-y-2">
+                                        <p className="text-green-400 text-sm">🎉 You are eligible! Generate your certificate now.</p>
+                                        <button
+                                            onClick={handleGenerateCertificate}
+                                            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 rounded-lg text-black font-bold text-sm transition-all"
+                                        >
+                                            <Award className="w-4 h-4" />
+                                            Generate Certificate
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-2">
+                                        <p className="text-gray-400 text-sm">{certEligibility.message || 'Complete all machines to earn your certificate!'}</p>
+                                        <div className="w-full h-2 bg-[#111827] rounded-full overflow-hidden">
+                                            <div
+                                                className="h-full bg-yellow-500 rounded-full transition-all"
+                                                style={{ width: `${certEligibility.total ? (certEligibility.completed / certEligibility.total) * 100 : 0}%` }}
+                                            />
+                                        </div>
+                                        <p className="text-xs text-gray-500 text-center">{certEligibility.completed || 0} / {certEligibility.total || 0} machines</p>
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
 
                     {/* Right col: season progress + content tabs */}

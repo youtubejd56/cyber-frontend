@@ -107,4 +107,11 @@ export const framesAPI = {
     selectFrame: (frameId: string) => api.post('/frames/select/', { frame_id: frameId }),
 }
 
+// Certificate
+export const certificateAPI = {
+    getEligibility: () => api.get('/certificate/eligibility/'),
+    generate: () => api.post('/certificate/generate/'),
+    getMyCertificate: () => api.get('/certificate/my/'),
+}
+
 export default api
