@@ -3,9 +3,9 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Cookies from 'js-cookie'
-import { Trophy, Flag, Target, Star, ChevronRight, Clock, Lock } from 'lucide-react'
+import { Trophy, Flag, Target, Star, ChevronRight, Clock, Lock, Crown, Gem, Award, Shield, Zap, Camera } from 'lucide-react'
 import Navbar from '../../components/Navbar'
-import { authAPI, roomsAPI, machinesAPI } from '../../lib/api'
+import { authAPI, roomsAPI, machinesAPI, framesAPI } from '../../lib/api'
 
 // Hexagon SVG clip
 const HEX_CLIP = `polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%)`
@@ -18,6 +18,17 @@ const rankColors: Record<string, string> = {
     'Elite Hacker': '#ff4060',
 }
 
+// Frame colors based on frame type
+const frameStyles: Record<string, { border: string; gradient: string; glow: string; shadow: string }> = {
+    'default': { border: '#374151', gradient: 'linear-gradient(135deg, #374151, #1f2937)', glow: '0 0 0', shadow: '0 0 0' },
+    'bronze': { border: '#cd7f32', gradient: 'linear-gradient(135deg, #cd7f32, #8b4513)', glow: '0 0 15px rgba(205, 127, 50, 0.5)', shadow: '0 4px 20px rgba(205, 127, 50, 0.3)' },
+    'silver': { border: '#c0c0c0', gradient: 'linear-gradient(135deg, #e8e8e8, #a8a8a8)', glow: '0 0 20px rgba(192, 192, 192, 0.6)', shadow: '0 4px 25px rgba(192, 192, 192, 0.4)' },
+    'gold': { border: '#ffd700', gradient: 'linear-gradient(135deg, #ffd700, #ffaa00)', glow: '0 0 25px rgba(255, 215, 0, 0.6)', shadow: '0 4px 30px rgba(255, 215, 0, 0.4)' },
+    'platinum': { border: '#e5e4e2', gradient: 'linear-gradient(135deg, #e5e4e2, #8e8e8e)', glow: '0 0 30px rgba(229, 228, 226, 0.7)', shadow: '0 4px 35px rgba(229, 228, 226, 0.5)' },
+    'diamond': { border: '#b9f2ff', gradient: 'linear-gradient(135deg, #b9f2ff, #4fc3f7)', glow: '0 0 35px rgba(79, 195, 247, 0.7)', shadow: '0 4px 40px rgba(79, 195, 247, 0.5)' },
+    'conqueror': { border: '#ff4060', gradient: 'linear-gradient(135deg, #ff4060, #ff6b6b, #ffd700)', glow: '0 0 40px rgba(255, 64, 96, 0.8)', shadow: '0 4px 50px rgba(255, 64, 96, 0.6)' },
+}
+
 const nextRankThresholds: Record<string, number> = {
     'Newbie': 500,
     'Script Kiddie': 2000,
@@ -26,6 +37,77 @@ const nextRankThresholds: Record<string, number> = {
     'Elite Hacker': 99999,
 }
 
+// Frame reward thresholds
+const frameRewards = [
+    { frame_id: 'bronze', name: 'Bronze', icon: '🥉', points: 50, color: '#cd7f32' },
+    { frame_id: 'silver', name: 'Silver', icon: '🥈', points: 200, color: '#c0c0c0' },
+    { frame_id: 'gold', name: 'Gold', icon: '🥇', points: 400, color: '#ffd700' },
+    { frame_id: 'platinum', name: 'Platinum', icon: '💎', points: 600, color: '#e5e4e2' },
+    { frame_id: 'diamond', name: 'Diamond', icon: '💠', points: 800, color: '#4fc3f7' },
+    { frame_id: 'conqueror', name: 'Conqueror', icon: '👑', points: 1000, color: '#ff4060' },
+]
+
+// Avatar character options for profile customization
+const avatarOptions = [
+    { seed: 'hacker1', name: 'Cyber Ninja' },
+    { seed: 'ghost', name: 'Ghost' },
+    { seed: 'phantom', name: 'Phantom' },
+    { seed: 'shadow', name: 'Shadow' },
+    { seed: 'storm', name: 'Storm' },
+    { seed: 'blaze', name: 'Blaze' },
+    { seed: 'frost', name: 'Frost' },
+    { seed: 'thunder', name: 'Thunder' },
+    { seed: 'neon', name: 'Neon' },
+    { seed: 'cipher', name: 'Cipher' },
+    { seed: 'zero', name: 'Zero' },
+    { seed: 'nexus', name: 'Nexus' },
+    { seed: 'pixel', name: 'Pixel' },
+    { seed: 'byte', name: 'Byte' },
+    { seed: 'node', name: 'Node' },
+    { seed: 'root', name: 'Root' },
+    { seed: 'admin', name: 'Admin' },
+    { seed: 'system', name: 'System' },
+    { seed: 'daemon', name: 'Daemon' },
+    { seed: 'kernel', name: 'Kernel' },
+    { seed: 'vector', name: 'Vector' },
+    { seed: 'matrix', name: 'Matrix' },
+    { seed: 'proxy', name: 'Proxy' },
+    { seed: 'firewall', name: 'Firewall' },
+    { seed: 'malware', name: 'Malware' },
+    { seed: 'exploit', name: 'Exploit' },
+    { seed: 'payload', name: 'Payload' },
+    { seed: 'shellcode', name: 'Shellcode' },
+    { seed: 'buffer', name: 'Buffer' },
+    { seed: 'overflow', name: 'Overflow' },
+    { seed: 'injection', name: 'Injection' },
+    { seed: 'backdoor', name: 'Backdoor' },
+    { seed: 'trojan', name: 'Trojan' },
+    { seed: 'worm', name: 'Worm' },
+    { seed: 'virus', name: 'Virus' },
+    { seed: 'keylogger', name: 'Keylogger' },
+    { seed: 'sniffer', name: 'Sniffer' },
+    { seed: 'spoofer', name: 'Spoofer' },
+    { seed: 'cracker', name: 'Cracker' },
+    { seed: 'anon', name: 'Anonymous' },
+    { seed: 'legion', name: 'Legion' },
+    { seed: 'lizard', name: 'Lizard' },
+    { seed: 'anonymous', name: 'Anon' },
+    { seed: 'h4ck3r', name: 'H4ck3r' },
+    { seed: 'n3trunner', name: 'Netrunner' },
+    { seed: 'cyb3r', name: 'Cyb3r' },
+    { seed: 'dr4g0n', name: 'Dr4g0n' },
+    { seed: 'ph03nix', name: 'Ph03nix' },
+    { seed: 'titan', name: 'Titan' },
+    { seed: 'vortex', name: 'Vortex' },
+    { seed: 'quantum', name: 'Quantum' },
+    { seed: 'neural', name: 'Neural' },
+    { seed: 'synthetic', name: 'Synthetic' },
+    { seed: 'android', name: 'Android' },
+    { seed: 'cyborg', name: 'Cyborg' },
+    { seed: 'reaper', name: 'Reaper' },
+    { seed: 'spectre', name: 'Spectre' },
+]
+
 export default function ProfilePage() {
     const router = useRouter()
     const [user, setUser] = useState<any>(null)
@@ -33,19 +115,49 @@ export default function ProfilePage() {
     const [machines, setMachines] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
     const [activeTab, setActiveTab] = useState<'foryou' | 'inprogress' | 'favorites'>('foryou')
+    const [showFrameModal, setShowFrameModal] = useState(false)
+    const [showAvatarModal, setShowAvatarModal] = useState(false)
+    const [myFrames, setMyFrames] = useState<any>(null)
+    const [currentFrame, setCurrentFrame] = useState('default')
 
     useEffect(() => {
         const token = Cookies.get('token')
         if (!token) { router.push('/login'); return }
-        Promise.all([authAPI.getMe(), roomsAPI.getAll(), machinesAPI.getAll()])
-            .then(([uRes, rRes, mRes]) => {
+        Promise.all([authAPI.getMe(), roomsAPI.getAll(), machinesAPI.getAll(), framesAPI.getMyFrames()])
+            .then(([uRes, rRes, mRes, fRes]) => {
                 setUser(uRes.data)
                 setRooms(rRes.data)
                 setMachines(mRes.data)
+                setMyFrames(fRes.data)
+                setCurrentFrame(fRes.data.current_frame || 'default')
             })
             .catch(() => router.push('/login'))
             .finally(() => setLoading(false))
     }, [])
+
+    const handleSelectFrame = async (frameId: string) => {
+        try {
+            await framesAPI.selectFrame(frameId)
+            setCurrentFrame(frameId)
+            setShowFrameModal(false)
+        } catch (error) {
+            console.error('Failed to select frame:', error)
+        }
+    }
+
+    const handleSelectAvatar = async (seed: string) => {
+        try {
+            const newAvatar = `https://api.dicebear.com/7.x/pixel-art/svg?seed=${seed}`
+            await authAPI.updateAvatar(seed)
+            setUser((prev: any) => ({
+                ...prev,
+                profile: { ...prev.profile, avatar: newAvatar }
+            }))
+            setShowAvatarModal(false)
+        } catch (error) {
+            console.error('Failed to update avatar:', error)
+        }
+    }
 
     if (loading) return (
         <div className="min-h-screen bg-[#111827] flex items-center justify-center">
@@ -62,11 +174,12 @@ export default function ProfilePage() {
     const flagsCaptured = user.flags_captured || 0
     const roomsJoined = (user.rooms_joined || []).length
     const joinedRoomIds = new Set(user.rooms_joined || [])
+    const unlockedFrames = myFrames?.unlocked_frames || ['default']
+
+    const currentFrameStyle = frameStyles[currentFrame] || frameStyles.default
 
     const inProgressRooms = rooms.filter((r: any) => joinedRoomIds.has(r.id)).slice(0, 6)
     const forYouMachines = machines.filter((m: any) => !m.retired).slice(0, 6)
-    const featuredMachine = machines[0]
-    const seasonalMachine = machines.find((m: any) => !m.retired) || machines[1]
 
     return (
         <div className="min-h-screen bg-[#111827]">
@@ -75,8 +188,22 @@ export default function ProfilePage() {
             <div className="max-w-6xl mx-auto px-4 py-6">
                 {/* Profile Header */}
                 <div className="flex items-center gap-4 mb-6">
-                    <div className="relative w-16 h-16 flex-shrink-0" style={{ clipPath: HEX_CLIP, background: rankColor + '22', outline: `2px solid ${rankColor}55` }}>
-                        <img src={avatar} alt="avatar" className="w-full h-full object-cover" style={{ clipPath: HEX_CLIP }} />
+                    <div
+                        className="relative w-20 h-20 flex-shrink-0 rounded-xl"
+                        style={{
+                            background: currentFrameStyle.gradient,
+                            boxShadow: currentFrameStyle.shadow,
+                            padding: '3px'
+                        }}
+                    >
+                        <div className="w-full h-full rounded-lg overflow-hidden" style={{ clipPath: HEX_CLIP, background: '#111827' }}>
+                            <img src={avatar} alt="avatar" className="w-full h-full object-cover" style={{ clipPath: HEX_CLIP }} />
+                        </div>
+                        {/* Frame glow effect */}
+                        <div
+                            className="absolute inset-0 rounded-xl pointer-events-none"
+                            style={{ boxShadow: currentFrameStyle.glow }}
+                        />
                     </div>
                     <div>
                         <div className="flex items-center gap-3 flex-wrap">
@@ -86,8 +213,18 @@ export default function ProfilePage() {
                         </div>
                         <p className="text-gray-500 text-sm mt-0.5">{user.email}</p>
                     </div>
-                    <div className="ml-auto">
-                        <button className="px-4 py-2 bg-[#1f2937] border border-gray-700 rounded text-sm text-white hover:border-gray-500 transition-colors">
+                    <div className="ml-auto flex gap-2">
+                        <button
+                            onClick={() => setShowFrameModal(true)}
+                            className="px-4 py-2 bg-gradient-to-r from-[#9fef00] to-[#7acc00] border-0 rounded text-sm text-black font-bold hover:from-[#afff00] hover:to-[#9fef00] transition-all"
+                        >
+                            🎨 Change Frame
+                        </button>
+                        <button
+                            onClick={() => setShowAvatarModal(true)}
+                            className="px-4 py-2 bg-[#1f2937] border border-gray-700 rounded text-sm text-white hover:border-gray-500 transition-colors flex items-center gap-2"
+                        >
+                            <Camera className="w-4 h-4" />
                             Edit Profile
                         </button>
                     </div>
@@ -100,10 +237,17 @@ export default function ProfilePage() {
                         {/* Rank Card */}
                         <div className="bg-[#1f2937] rounded-xl p-6 border border-gray-800 flex flex-col items-center">
                             <div
-                                className="relative w-28 h-32 flex items-center justify-center mb-3"
-                                style={{ clipPath: HEX_CLIP, background: '#111827', border: `2px solid ${rankColor}` }}
+                                className="relative w-28 h-32 flex items-center justify-center mb-3 rounded-xl"
+                                style={{
+                                    background: currentFrameStyle.gradient,
+                                    boxShadow: currentFrameStyle.shadow,
+                                    padding: '4px'
+                                }}
                             >
-                                <img src={avatar} alt="avatar" className="w-24 h-28 object-cover" style={{ clipPath: HEX_CLIP }} />
+                                <div className="w-full h-full rounded-lg overflow-hidden" style={{ clipPath: HEX_CLIP, background: '#111827' }}>
+                                    <img src={avatar} alt="avatar" className="w-full h-full object-cover" style={{ clipPath: HEX_CLIP }} />
+                                </div>
+                                <div className="absolute inset-0 rounded-xl pointer-events-none" style={{ boxShadow: currentFrameStyle.glow }} />
                             </div>
                             <p className="text-gray-400 text-xs mb-1">Hack The Box Rank</p>
                             <h2 className="text-2xl font-bold text-white mb-3">{rank}</h2>
@@ -193,7 +337,12 @@ export default function ProfilePage() {
                                     <div className="text-white font-bold">{rank}</div>
                                 </div>
                                 <div className="ml-auto">
-                                    <button className="text-xs text-[#9fef00] hover:underline">View Rewards →</button>
+                                    <button
+                                        onClick={() => setShowFrameModal(true)}
+                                        className="text-xs text-[#9fef00] hover:underline"
+                                    >
+                                        View Rewards →
+                                    </button>
                                 </div>
                             </div>
 
@@ -285,6 +434,183 @@ export default function ProfilePage() {
                     </div>
                 </div>
             </div>
+
+            {/* Frame Selection Modal */}
+            {showFrameModal && (
+                <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+                    <div className="bg-[#1f2937] rounded-2xl border border-gray-700 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                        <div className="p-6 border-b border-gray-700">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h2 className="text-2xl font-bold text-white">🏅 Frame Collection</h2>
+                                    <p className="text-gray-400 text-sm mt-1">Unlock frames by earning points!</p>
+                                </div>
+                                <button
+                                    onClick={() => setShowFrameModal(false)}
+                                    className="text-gray-400 hover:text-white text-2xl"
+                                >
+                                    ×
+                                </button>
+                            </div>
+                            <div className="mt-4 bg-[#111827] rounded-lg p-3 flex items-center justify-between">
+                                <span className="text-gray-400">Your Points:</span>
+                                <span className="text-2xl font-bold text-[#9fef00]">{points}</span>
+                            </div>
+                        </div>
+
+                        <div className="p-6 grid grid-cols-2 sm:grid-cols-3 gap-4">
+                            {/* Default Frame */}
+                            <button
+                                onClick={() => handleSelectFrame('default')}
+                                className={`relative p-4 rounded-xl border-2 transition-all ${currentFrame === 'default'
+                                    ? 'border-[#9fef00] bg-[#9fef00]/10'
+                                    : 'border-gray-700 hover:border-gray-500 bg-[#111827]'
+                                    }`}
+                            >
+                                <div className="w-16 h-16 mx-auto mb-3 rounded-xl bg-gray-700 flex items-center justify-center">
+                                    <span className="text-3xl">⬜</span>
+                                </div>
+                                <p className="text-white font-bold text-center">Default</p>
+                                <p className="text-gray-500 text-xs text-center">Free</p>
+                                {currentFrame === 'default' && (
+                                    <div className="absolute top-2 right-2 text-[#9fef00]">✓</div>
+                                )}
+                            </button>
+
+                            {/* Frame Rewards */}
+                            {frameRewards.map((frame) => {
+                                const isUnlocked = unlockedFrames.includes(frame.frame_id)
+                                const canUnlock = points >= frame.points
+                                const style = frameStyles[frame.frame_id]
+
+                                return (
+                                    <button
+                                        key={frame.frame_id}
+                                        onClick={() => isUnlocked && handleSelectFrame(frame.frame_id)}
+                                        disabled={!isUnlocked}
+                                        className={`relative p-4 rounded-xl border-2 transition-all ${currentFrame === frame.frame_id
+                                            ? 'border-[#9fef00] bg-[#9fef00]/10'
+                                            : isUnlocked
+                                                ? 'border-gray-500 hover:border-gray-300 bg-[#111827]'
+                                                : 'border-gray-800 bg-[#111827] opacity-60'
+                                            }`}
+                                        style={isUnlocked ? {
+                                            background: `${style.border}15`,
+                                            borderColor: style.border
+                                        } : {}}
+                                    >
+                                        <div
+                                            className="w-16 h-16 mx-auto mb-3 rounded-xl flex items-center justify-center"
+                                            style={isUnlocked ? {
+                                                background: style.gradient,
+                                                boxShadow: style.glow
+                                            } : { background: '#374151' }}
+                                        >
+                                            <span className="text-3xl">{frame.icon}</span>
+                                        </div>
+                                        <p className="text-white font-bold text-center">{frame.name}</p>
+                                        <p className={`text-xs text-center ${canUnlock ? 'text-green-400' : 'text-gray-500'}`}>
+                                            {isUnlocked ? 'Unlocked!' : `${frame.points} pts`}
+                                        </p>
+
+                                        {!isUnlocked && (
+                                            <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-xl">
+                                                <Lock className="w-6 h-6 text-gray-400" />
+                                            </div>
+                                        )}
+
+                                        {currentFrame === frame.frame_id && (
+                                            <div className="absolute top-2 right-2 text-[#9fef00] font-bold">✓</div>
+                                        )}
+                                    </button>
+                                )
+                            })}
+                        </div>
+
+                        {/* Progress Info */}
+                        <div className="p-6 border-t border-gray-700">
+                            <h3 className="text-white font-bold mb-3">Next Frame Progress</h3>
+                            <div className="space-y-2">
+                                {frameRewards.filter(f => !unlockedFrames.includes(f.frame_id)).slice(0, 1).map((frame) => (
+                                    <div key={frame.frame_id} className="bg-[#111827] rounded-lg p-3">
+                                        <div className="flex justify-between text-sm mb-2">
+                                            <span className="text-gray-400">Next: {frame.name}</span>
+                                            <span className="text-white">{points} / {frame.points} pts</span>
+                                        </div>
+                                        <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
+                                            <div
+                                                className="h-full rounded-full transition-all"
+                                                style={{
+                                                    width: `${Math.min(100, (points / frame.points) * 100)}%`,
+                                                    background: frame.color
+                                                }}
+                                            />
+                                        </div>
+                                        <p className="text-gray-500 text-xs mt-2">
+                                            Need {frame.points - points} more points to unlock {frame.name} frame!
+                                        </p>
+                                    </div>
+                                ))}
+                                {frameRewards.every(f => unlockedFrames.includes(f.frame_id)) && (
+                                    <div className="bg-gradient-to-r from-[#ffd700]/20 to-[#ff4060]/20 rounded-lg p-4 text-center">
+                                        <Crown className="w-8 h-8 mx-auto mb-2 text-[#ffd700]" />
+                                        <p className="text-white font-bold">You've unlocked all frames!</p>
+                                        <p className="text-gray-400 text-sm">You're a true Conqueror! 👑</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Avatar Selection Modal */}
+            {showAvatarModal && (
+                <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+                    <div className="bg-[#1f2937] rounded-2xl border border-gray-700 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                        <div className="p-6 border-b border-gray-700">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h2 className="text-2xl font-bold text-white">🎭 Choose Your Avatar</h2>
+                                    <p className="text-gray-400 text-sm mt-1">Select a character for your profile!</p>
+                                </div>
+                                <button
+                                    onClick={() => setShowAvatarModal(false)}
+                                    className="text-gray-400 hover:text-white text-2xl"
+                                >
+                                    ×
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="p-6 grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-3">
+                            {avatarOptions.map((option) => (
+                                <button
+                                    key={option.seed}
+                                    onClick={() => handleSelectAvatar(option.seed)}
+                                    className={`p-3 rounded-xl border-2 transition-all hover:scale-105 ${avatar === `https://api.dicebear.com/7.x/pixel-art/svg?seed=${option.seed}`
+                                        ? 'border-[#9fef00] bg-[#9fef00]/10'
+                                        : 'border-gray-700 hover:border-gray-500 bg-[#111827]'
+                                        }`}
+                                >
+                                    <img
+                                        src={`https://api.dicebear.com/7.x/pixel-art/svg?seed=${option.seed}`}
+                                        alt={option.name}
+                                        className="w-16 h-16 mx-auto mb-2"
+                                    />
+                                    <p className="text-white text-xs font-bold text-center">{option.name}</p>
+                                </button>
+                            ))}
+                        </div>
+
+                        <div className="p-6 border-t border-gray-700">
+                            <p className="text-gray-400 text-sm text-center">
+                                More avatars coming soon! 🎮
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

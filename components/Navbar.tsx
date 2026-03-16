@@ -6,6 +6,9 @@ import { Terminal, LayoutDashboard, Target, Shield, Trophy, LogOut, User, Menu, 
 import Cookies from 'js-cookie'
 import { authAPI } from '../lib/api'
 
+// Fallback to production API URL if env var is not set
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://cyber-backend-ciui.onrender.com'
+
 export default function Navbar() {
     const pathname = usePathname()
     const router = useRouter()
@@ -80,7 +83,7 @@ export default function Navbar() {
                                 {/* Admin Button */}
                                 {user.is_superuser || user.is_staff ? (
                                     <a
-                                        href={`${process.env.NEXT_PUBLIC_API_URL}/admin/`}
+                                        href={`${API_BASE}/admin/`}
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm bg-purple-600/20 text-purple-400 border border-purple-500/30 hover:bg-purple-600/30 hover:border-purple-500/50 transition-all"
@@ -103,16 +106,6 @@ export default function Navbar() {
                             </div>
                         ) : (
                             <div className="hidden md:flex gap-2">
-                                <a
-                                    href={`${process.env.NEXT_PUBLIC_API_URL}/admin/`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm bg-purple-600/20 text-purple-400 border border-purple-500/30 hover:bg-purple-600/30 hover:border-purple-500/50 transition-all"
-                                    title="Admin Panel"
-                                >
-                                    <Cpu className="w-4 h-4" />
-                                    Admin
-                                </a>
                                 <Link href="/login" className="btn-cyber px-4 py-2 rounded-lg text-sm">Login</Link>
                                 <Link href="/register" className="btn-primary px-4 py-2 rounded-lg text-sm text-dark-900 font-bold">Register</Link>
                             </div>

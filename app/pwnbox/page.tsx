@@ -28,11 +28,13 @@ export default function PwnBoxPage() {
         try {
             const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/vpn/status/`, {
                 headers: {
-                    'Authorization': `Token ${Cookies.get('token')}`
+                    'Authorization': `Bearer ${Cookies.get('token')}`
                 }
             })
-            const data = await res.json()
-            setVpnConnected(data.connected || false)
+            if (res.ok) {
+                const data = await res.json()
+                setVpnConnected(data.connected || false)
+            }
         } catch (err) {
             console.error('Error checking VPN status:', err)
         }

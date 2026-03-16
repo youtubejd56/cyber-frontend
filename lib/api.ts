@@ -37,6 +37,8 @@ export const authAPI = {
     login: (username: string, password: string) =>
         api.post('/auth/login/', { username, password }),
     getMe: () => api.get('/auth/me/'),
+    updateAvatar: (avatar: string) =>
+        api.post('/auth/update-avatar/', { avatar }),
 }
 
 // Rooms
@@ -96,6 +98,13 @@ export const pwnboxAPI = {
     getStatus: () => api.get('/pwnbox/'),
     start: () => api.post('/pwnbox/'),
     stop: () => api.post('/pwnbox/stop/'),
+}
+
+// Frames (PUBG Conquer Style)
+export const framesAPI = {
+    getAll: () => api.get('/frames/'),
+    getMyFrames: () => api.get('/frames/my/'),
+    selectFrame: (frameId: string) => api.post('/frames/select/', { frame_id: frameId }),
 }
 
 export default api
