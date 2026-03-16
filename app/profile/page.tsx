@@ -229,24 +229,28 @@ export default function ProfilePage() {
                         <p className="text-gray-500 text-sm mt-0.5">{user.email}</p>
                     </div>
                     <div className="ml-auto flex gap-2">
-                        {certificate?.has_certificate ? (
-                            <a
-                                href={certificate.download_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="px-4 py-2 bg-gradient-to-r from-yellow-500 to-orange-500 border-0 rounded text-sm text-black font-bold hover:from-yellow-400 hover:to-orange-400 transition-all flex items-center gap-2"
-                            >
-                                <Download className="w-4 h-4" />
-                                Download Certificate
-                            </a>
-                        ) : (
-                            <button
-                                onClick={handleGenerateCertificate}
-                                className="px-4 py-2 bg-gradient-to-r from-yellow-500 to-orange-500 border-0 rounded text-sm text-black font-bold hover:from-yellow-400 hover:to-orange-400 transition-all flex items-center gap-2"
-                            >
-                                <Award className="w-4 h-4" />
-                                Get Certificate
-                            </button>
+                        {certEligibility?.is_admin && (
+                            <>
+                                {certificate?.has_certificate ? (
+                                    <a
+                                        href={certificate.download_url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="px-4 py-2 bg-gradient-to-r from-yellow-500 to-orange-500 border-0 rounded text-sm text-black font-bold hover:from-yellow-400 hover:to-orange-400 transition-all flex items-center gap-2"
+                                    >
+                                        <Download className="w-4 h-4" />
+                                        Download Certificate
+                                    </a>
+                                ) : (
+                                    <button
+                                        onClick={handleGenerateCertificate}
+                                        className="px-4 py-2 bg-gradient-to-r from-yellow-500 to-orange-500 border-0 rounded text-sm text-black font-bold hover:from-yellow-400 hover:to-orange-400 transition-all flex items-center gap-2"
+                                    >
+                                        <Award className="w-4 h-4" />
+                                        Get Certificate
+                                    </button>
+                                )}
+                            </>
                         )}
                         <button
                             onClick={() => setShowFrameModal(true)}
